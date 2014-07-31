@@ -38,8 +38,8 @@ under the License.
     <dependencies>
       <dependency>
         <groupId>samza</groupId>
-        <artifactId>samza-wikipedia</artifactId>
-        <version>0.7.0</version>
+        <artifactId>samza-alarm</artifactId>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
