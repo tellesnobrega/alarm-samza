@@ -9,8 +9,8 @@
     <version>0.7.0</version>
   </parent>
 
-  <artifactId>samza-wikipedia</artifactId>
-  <name>Samza Wikipedia Example</name>
+  <artifactId>samza-alarm</artifactId>
+  <name>Samza Alarm Application</name>
   <packaging>jar</packaging>
 
   <dependencies>

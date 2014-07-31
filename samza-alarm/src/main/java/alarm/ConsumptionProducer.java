@@ -17,27 +17,45 @@
  * under the License.
  */
 
-package samza.examples.wikipedia.task;
+package alarm;
 
 import java.util.Map;
+import java.util.Random;
+
+import org.apache.samza.config.Config;
 import org.apache.samza.system.IncomingMessageEnvelope;
 import org.apache.samza.system.OutgoingMessageEnvelope;
 import org.apache.samza.system.SystemStream;
+import org.apache.samza.task.InitableTask;
 import org.apache.samza.task.MessageCollector;
 import org.apache.samza.task.StreamTask;
+import org.apache.samza.task.TaskContext;
 import org.apache.samza.task.TaskCoordinator;
-import samza.examples.wikipedia.system.WikipediaFeed.WikipediaFeedEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * This task is very simple. All it does is take messages that it receives, and
- * sends them to a Kafka topic called wikipedia-raw.
- */
-public class WikipediaFeedStreamTask implements StreamTask {
-  private static final SystemStream OUTPUT_STREAM = new SystemStream("kafka", "wikipedia-raw");
 
-  @Override
-  public void process(IncomingMessageEnvelope envelope, MessageCollector collector, TaskCoordinator coordinator) {
-    Map<String, Object> outgoingMap = WikipediaFeedEvent.toMap((WikipediaFeedEvent) envelope.getMessage());
-    collector.send(new OutgoingMessageEnvelope(OUTPUT_STREAM, outgoingMap));
-  }
+public class ConsumptionProducer  implements StreamTask, InitableTask {
+	private static final SystemStream OUTPUT_STREAM = new SystemStream("kafka", "consumptions");
+	private static int MAX_KEY = 10;
+	private static int MAX_VALUE = 100;
+	private static Random random = new Random();
+	private static final Logger log = LoggerFactory.getLogger(ConsumptionProducer.class);
+
+	@Override
+	public void process(IncomingMessageEnvelope envelope, MessageCollector collector, TaskCoordinator coordinator) {
+		int key = random.nextInt(MAX_KEY);
+		int value = random.nextInt(MAX_VALUE);
+		
+		Event event = new Event(Type.CONSUMPTION, key, value);
+		Map<String, Object> outgoingMap = Event.toMap(event);
+		collector.send(new OutgoingMessageEnvelope(OUTPUT_STREAM, outgoingMap));
+	}
+
+	@Override
+	public void init(Config arg0, TaskContext arg1) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
