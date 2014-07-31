@@ -1,74 +1,102 @@
 #!/bin/bash -e
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
 # This script will download, setup, start, and stop servers for Kafka, YARN, and ZooKeeper,
 # as well as downloading, building and locally publishing Samza
 
 if [ -z "$JAVA_HOME" ]; then
-  echo "JAVA_HOME not set. Exiting."
-  exit 1
+  if [ -x /usr/libexec/java_home ]; then
+    export JAVA_HOME="$(/usr/libexec/java_home)"
+  else
+    echo "JAVA_HOME not set. Exiting."
+    exit 1
+  fi
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASE_DIR=$(dirname $DIR)
 DEPLOY_ROOT_DIR=$BASE_DIR/deploy
-DEPLOY_DOWNLOAD_DIR=$BASE_DIR/deploy/download
+DOWNLOAD_CACHE_DIR=$HOME/.samza/download
 COMMAND=$1
 SYSTEM=$2
 
-DOWNLOAD_KAFKA=http://mirrors.sonic.net/apache/kafka/0.8.0/kafka_2.8.0-0.8.0.tar.gz
-DOWNLOAD_YARN=http://mirrors.sonic.net/apache/hadoop/common/hadoop-2.2.0/hadoop-2.2.0.tar.gz
+DOWNLOAD_KAFKA=http://www.us.apache.org/dist/kafka/0.8.1.1/kafka_2.9.2-0.8.1.1.tgz
+DOWNLOAD_YARN=https://archive.apache.org/dist/hadoop/common/hadoop-2.2.0/hadoop-2.2.0.tar.gz
 DOWNLOAD_ZOOKEEPER=http://archive.apache.org/dist/zookeeper/zookeeper-3.4.3/zookeeper-3.4.3.tar.gz
 
 bootstrap() {
   echo "Bootstrapping the system..."
   stop_all
-  rm -rf $DEPLOY_ROOT_DIR
+  rm -rf "$DEPLOY_ROOT_DIR"
+  mkdir "$DEPLOY_ROOT_DIR"
   install_all
   start_all
   exit 0
 }
 
 install_all() {
-  $DIR/grid install samza
   $DIR/grid install zookeeper
   $DIR/grid install yarn
   $DIR/grid install kafka
 }
 
 install_zookeeper() {
-  install "zookeeper-3.4.3"
-  cp $DEPLOY_ROOT_DIR/$SYSTEM/conf/zoo_sample.cfg $DEPLOY_ROOT_DIR/$SYSTEM/conf/zoo.cfg
+  mkdir -p "$DEPLOY_ROOT_DIR"
+  install zookeeper $DOWNLOAD_ZOOKEEPER zookeeper-3.4.3
+  cp "$DEPLOY_ROOT_DIR/zookeeper/conf/zoo_sample.cfg" "$DEPLOY_ROOT_DIR/zookeeper/conf/zoo.cfg"
 }
 
 install_yarn() {
-  install "hadoop-2.2.0"
-  cp $BASE_DIR/conf/yarn-site.xml $DEPLOY_ROOT_DIR/$SYSTEM/etc/hadoop/yarn-site.xml
+  mkdir -p "$DEPLOY_ROOT_DIR"
+  install yarn $DOWNLOAD_YARN hadoop-2.2.0
+  cp "$BASE_DIR/conf/yarn-site.xml" "$DEPLOY_ROOT_DIR/yarn/etc/hadoop/yarn-site.xml"
+  if [ ! -f "$HOME/.samza/conf/yarn-site.xml" ]; then
+    mkdir -p "$HOME/.samza/conf"
+    cp "$BASE_DIR/conf/yarn-site.xml" "$HOME/.samza/conf/yarn-site.xml"
+  fi
 }
 
 install_kafka() {
-  install "kafka_2.8.0-0.8.0"
+  mkdir -p "$DEPLOY_ROOT_DIR"
+  install kafka $DOWNLOAD_KAFKA kafka_2.9.2-0.8.1.1
   # have to use SIGTERM since nohup on appears to ignore SIGINT
   # and Kafka switched to SIGINT in KAFKA-1031.
-  sed -i.bak 's/SIGINT/SIGTERM/g' deploy/kafka/bin/kafka-server-stop.sh 
-}
-
-install_samza() {
-  mkdir -p $DEPLOY_DOWNLOAD_DIR
-  cd $DEPLOY_DOWNLOAD_DIR 
-  git clone git://git.apache.org/incubator-samza.git
-  cd incubator-samza
-  ./gradlew -PscalaVersion=2.8.1 publishToMavenLocal
-  cd ../..
+  sed -i.bak 's/SIGINT/SIGTERM/g' $DEPLOY_ROOT_DIR/kafka/bin/kafka-server-stop.sh
+  # in order to simplify the wikipedia-stats example job, set topic to have just 1 partition by default
+  sed -i.bak 's/^num\.partitions *=.*/num.partitions=1/' $DEPLOY_ROOT_DIR/kafka/config/server.properties
 }
 
 install() {
-  PACKAGE_DIR=$1
-  mkdir -p $DEPLOY_DOWNLOAD_DIR
-  rm -rf $DEPLOY_ROOT_DIR/$SYSTEM
-  DOWNLOAD_COMMAND="curl \$DOWNLOAD_""`echo $SYSTEM|tr '[a-z]' '[A-Z]'`"
-  eval $DOWNLOAD_COMMAND > $DEPLOY_DOWNLOAD_DIR/$SYSTEM.tar.gz
-  tar -xf $DEPLOY_DOWNLOAD_DIR/$SYSTEM.tar.gz -C $DEPLOY_DOWNLOAD_DIR
-  mv $DEPLOY_DOWNLOAD_DIR/$PACKAGE_DIR $DEPLOY_ROOT_DIR/$SYSTEM
+  DESTINATION_DIR="$DEPLOY_ROOT_DIR/$1"
+  DOWNLOAD_URL=$2
+  PACKAGE_DIR="$DOWNLOAD_CACHE_DIR/$3"
+  PACKAGE_FILE="$DOWNLOAD_CACHE_DIR/$(basename $DOWNLOAD_URL)"
+  if [ -f "$PACKAGE_FILE" ]; then
+    echo "Using previously downloaded file $PACKAGE_FILE"
+  else
+    echo "Downloading $(basename $DOWNLOAD_URL)..."
+    mkdir -p $DOWNLOAD_CACHE_DIR
+    curl "$DOWNLOAD_URL" > "${PACKAGE_FILE}.tmp"
+    mv "${PACKAGE_FILE}.tmp" "$PACKAGE_FILE"
+  fi
+  rm -rf "$DESTINATION_DIR" "$PACKAGE_DIR"
+  tar -xf "$PACKAGE_FILE" -C $DOWNLOAD_CACHE_DIR
+  mv "$PACKAGE_DIR" "$DESTINATION_DIR"
 }
 
 start_all() {
@@ -88,16 +116,9 @@ start_zookeeper() {
 }
 
 start_yarn() {
-  if [ -f $DEPLOY_ROOT_DIR/$SYSTEM/bin/yarn ]; then
-    cd $DEPLOY_ROOT_DIR/$SYSTEM
-    mkdir -p pids logs
-    nohup bin/yarn resourcemanager > logs/rm.log 2>&1 &
-    RM_PID=$!
-    echo $RM_PID > pids/rm.pid
-    nohup bin/yarn nodemanager > logs/nm.log 2>&1 &
-    NM_PID=$!
-    echo $NM_PID > pids/nm.pid
-    cd - > /dev/null
+  if [ -f $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh ]; then
+    $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh start resourcemanager
+    $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh start nodemanager
   else
     echo 'YARN is not installed. Run: bin/grid install yarn'
   fi
@@ -131,15 +152,9 @@ stop_zookeeper() {
 }
 
 stop_yarn() {
-  if [ -f $DEPLOY_ROOT_DIR/$SYSTEM/bin/yarn ]; then
-    cd $DEPLOY_ROOT_DIR/$SYSTEM
-    RM_PID=`cat pids/rm.pid`
-    NM_PID=`cat pids/nm.pid`
-    kill $RM_PID
-    kill $NM_PID
-    rm -rf pids/rm.pid
-    rm -rf pids/nm.pid
-    cd - > /dev/null
+  if [ -f $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh ]; then
+    $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh stop resourcemanager
+    $DEPLOY_ROOT_DIR/$SYSTEM/sbin/yarn-daemon.sh stop nodemanager
   else
     echo 'YARN is not installed. Run: bin/grid install yarn'
   fi
@@ -148,7 +163,7 @@ stop_yarn() {
 stop_kafka() {
   if [ -f $DEPLOY_ROOT_DIR/$SYSTEM/bin/kafka-server-stop.sh ]; then
     cd $DEPLOY_ROOT_DIR/$SYSTEM
-    bin/kafka-server-stop.sh
+    bin/kafka-server-stop.sh || true # tolerate nonzero exit status if Kafka isn't running
     cd - > /dev/null
   else
     echo 'Kafka is not installed. Run: bin/grid install kafka'
@@ -173,6 +188,6 @@ elif (test -z "$COMMAND" && test -z "$SYSTEM") \
   exit 1
 else
   echo "EXECUTING: $COMMAND $SYSTEM"
-  
+
   "$COMMAND"_"$SYSTEM"
 fi
