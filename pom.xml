@@ -38,45 +38,45 @@ under the License.
     <dependencies>
       <dependency>
         <groupId>samza</groupId>
-        <artifactId>samza-alarm</artifactId>
+        <artifactId>samza-wikipedia</artifactId>
         <version>0.7.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-api</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-core_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-serializers_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-shell</artifactId>
         <classifier>dist</classifier>
         <type>tgz</type>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-yarn_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-kv_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.samza</groupId>
         <artifactId>samza-kafka_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>${samza.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -109,6 +109,7 @@ under the License.
   <properties>
     <!-- maven specific properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <samza.version>0.7.0</samza.version>
   </properties>
 
   <modules>
@@ -118,8 +119,8 @@ under the License.
 
   <developers>
     <developer>
-      <name>Chris Riccomini</name>
-      <email>criccomini@gmail.com</email>
+      <name>Telles Nóbrega</name>
+      <email>tellesnobrega@gmail.com</email>
       <timezone>-8</timezone>
     </developer>
   </developers>
@@ -133,14 +134,14 @@ under the License.
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/linkedin/hello-samza.git</connection>
-    <developerConnection>scm:git:git@github.com:linkedin/hello-samza.git</developerConnection>
-    <url>http://github.com/linkedin/hello-samza/</url>
+    <connection>scm:git:git@github.com:tellesnobrega/alarm-samza.git</connection>
+    <developerConnection>scm:git:git@github.com:tellesnobrega/alarm-samza.git</developerConnection>
+    <url>http://github.com/tellesnobrega/alarm-samza/</url>
   </scm>
 
   <issueManagement>
     <system>github</system>
-    <url>http://github.com/linkedin/hello-samza/issues</url>
+    <url>http://github.com/tellesnobrega/alarm-samza/issues</url>
   </issueManagement>
 
   <repositories>
