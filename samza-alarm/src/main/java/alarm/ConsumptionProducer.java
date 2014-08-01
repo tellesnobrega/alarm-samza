@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 
 public class ConsumptionProducer  implements StreamTask, InitableTask {
-	private static final SystemStream OUTPUT_STREAM = new SystemStream("kafka", "consumptions");
+	private static final SystemStream OUTPUT_STREAM = new SystemStream("kafka", "values");
 	private static int MAX_KEY = 10;
 	private static int MAX_VALUE = 100;
 	private static Random random = new Random();
