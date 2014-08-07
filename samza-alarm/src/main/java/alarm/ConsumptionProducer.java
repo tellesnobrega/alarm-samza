@@ -47,7 +47,7 @@ public class ConsumptionProducer  implements StreamTask, InitableTask {
 		int key = random.nextInt(MAX_KEY);
 		int value = random.nextInt(MAX_VALUE);
 		
-		log.info(key+";"+value);
+		log.info("EventSent");
 		Event event = new Event(Type.CONSUMPTION, key, value);
 		Map<String, Object> outgoingMap = Event.toMap(event);
 		collector.send(new OutgoingMessageEnvelope(OUTPUT_STREAM, outgoingMap));

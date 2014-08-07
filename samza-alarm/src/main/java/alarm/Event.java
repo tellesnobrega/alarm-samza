@@ -44,7 +44,7 @@ public class Event implements Serializable {
 	}
 	
 	public Event(Map<String, Object> jsonObject) {
-		this((Type) jsonObject.get("id"), (Integer) jsonObject.get("key"), (Integer) jsonObject.get("value"));
+		this(Type.valueOf(String.valueOf(jsonObject.get("id"))), (Integer) jsonObject.get("key"), (Integer) jsonObject.get("value"));
 	}
 
 	public Type getType() {

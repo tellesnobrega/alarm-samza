@@ -71,6 +71,9 @@
         <include>org.apache.samza:samza-kv_2.10</include>
         <include>org.slf4j:slf4j-log4j12</include>
         <include>samza:samza-alarm</include>
+        <include>org.apache.hadoop:hadoop-hdfs</include>
+        <include>org.apache.hadoop:hadoop-common</include>
+        <include>org.apache.hadoop:hadoop-client</include>
         <include>org.apache.kafka:kafka_2.10</include>
       </includes>
       <useTransitiveFiltering>true</useTransitiveFiltering>

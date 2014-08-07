@@ -26,7 +26,7 @@
      <param name="File" value="/home/ubuntu/output.log" />
      <param name="DatePattern" value="'.'yyyy-MM-dd" />
      <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%d{HH:mm:ss:SSS}%m%n" />
+      <param name="ConversionPattern" value="%d{HH:mm:ss:SSS};%m%n" />
      </layout>
   </appender>
   <root>

@@ -52,6 +52,7 @@ public class AverageCalc implements StreamTask {
 		Map<String, Object> outgoingMap = Event.toMap(averageEvent);
 
 		collector.send(new OutgoingMessageEnvelope(OUTPUT_STREAM, outgoingMap));
+		log.info("AckSent");
 	}
 
 	private void addMeasurement(int key, int value) {
