@@ -188,6 +188,7 @@ under the License.
               <exclude>.gitignore</exclude>
               <exclude>**/.cache/**</exclude>
               <exclude>deploy/**</exclude>
+              <exclude>run/**</exclude>
             </excludes>
           </configuration>
         </plugin>
